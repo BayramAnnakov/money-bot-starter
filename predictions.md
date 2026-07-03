@@ -2,8 +2,10 @@
 
 Every member logs ONE falsifiable prediction at kickoff. Nobody edits after day 1. Scored at the week-4 retro — calibration is the most transferable skill in this experiment.
 
-| Member | Prediction (measurable, with date/number) | Locked on | Outcome at retro |
-|--------|-------------------------------------------|-----------|------------------|
-|        | e.g. "First stranger-dollar by Jul 12"    |           |                  |
-|        | e.g. "Week-4 net P&L (incl. compute): −$180" |        |                  |
-|        | e.g. "Human interventions week 4: still >5/wk" |      |                  |
+| Member | Prediction (measurable, with date/number) | Confidence % | Locked on | Outcome at retro (scored by the week-4 bot-manager) |
+|--------|-------------------------------------------|--------------|-----------|------------------------------------------------------|
+|        | e.g. "First stranger-dollar by Jul 12"    | e.g. 60%     |           |                                                      |
+|        | e.g. "Week-4 net P&L (incl. compute): −$180" | e.g. 75%  |           |                                                      |
+|        | e.g. "Human interventions week 4: still >5/wk" | e.g. 80% |           |                                                      |
+
+Confidence % is what makes this calibration rather than trivia: over the set of predictions, your 70%-calls should come true ~70% of the time. The week-4 bot-manager scores every row at the retro (`retro.md` step 4 tracks trend weekly).
