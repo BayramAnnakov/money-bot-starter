@@ -1,11 +1,12 @@
-# Weekly Retros (owned by the rotating bot-manager — no code required)
+# Weekly Retros (owned by the bot's OWNER — no code required)
 
-The learning half of the experiment. One entry per week, filled at/before each meetup.
-This is also the raw material for the week-5 public write-up.
+The learning half of the experiment. One entry per week, filled BEFORE each meetup —
+the meetup itself is the league's cross-bot review, where every owner brings this
+plus the 5-line report (format in `REGISTRY.md`). Also the raw material for the week-5 public write-up.
 
 ---
 
-## Week N Retro — manager: ________ (template — copy per week)
+## Week N Retro — owner: ________ (template — copy per week)
 
 1. **Reconciliation** (the no-code role): opened the card + payment-processor dashboards.
    Ledger says $____, dashboards say $____. Match? (Y/N — if N, what diverged?)

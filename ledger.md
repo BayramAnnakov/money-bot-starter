@@ -10,7 +10,9 @@ Day counting: kickoff shadow night = Day 0; Day 1 = first live daily-loop run af
 |---|------|-----------|--------|----------------------|------------------|----------------------|-----------------|---------------|----------------------|-------------|
 | 1 |      |           |        |                      |                  |                      |                 |               |                      |             |
 
-`Stranger/insider` applies to revenue rows only (spend rows: `n/a`); `Expected return` applies to spend rows only. `stranger` = no connection to the group or its audience; `insider` = group members, their networks, or experiment spectators. Only stranger revenue counts toward the milestone. Disputed tags are adjudicated by the week's bot-manager and logged in `retro.md`.
+`Stranger/insider` applies to revenue rows only (spend rows: `n/a`); `Expected return` applies to spend rows only. `stranger` = no connection to the group or its audience; `insider` = group members, their networks, or experiment spectators. Only stranger revenue counts toward the milestone. Disputed tags are adjudicated at the weekly meetup and logged in `retro.md`.
+
+**Compute convention (kickoff decision):** the owner's LLM subscription and pre-existing service subscriptions (listed in `charter.md`) are NOT ledger rows — the agent uses them free. Any NEW external-service cost (generation APIs, paid data, credits) IS a spend row and counts against the budget. The weekly totals still report net including compute, for honesty.
 
 ## Running totals
 

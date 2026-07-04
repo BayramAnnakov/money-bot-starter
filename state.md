@@ -19,6 +19,9 @@
 3.
 
 ## Pending human approvals (HITL queue — humans clear this DAILY)
+<!-- Owner: to approve a GATED SPEND, grant exactly one execution: `touch approvals/APPROVE`
+     (the spend-gate hook consumes + logs it). For human-only steps (signups, KYC, checkout),
+     do the step yourself and mark the row done. -->
 | # | Requested | What needs approval | Gate triggered | Status |
 |---|-----------|--------------------|--------------------|--------|
 

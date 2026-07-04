@@ -1,51 +1,64 @@
 # Money Bot Starter
 
-Scaffold for the AI Natives autonomous money-making experiment (kicked off 2026-07-03).
+Scaffold for the AI Natives autonomous money-making experiment (kicked off 2026-07-03, launch 2026-07-10, 4 weeks).
 
 One repo = one agent = one P&L. The repo IS the observability layer: constitution, ledger, and decision log are all markdown, all auditable by the group.
 
-**Clone model:** there is ONE flagship instance of this repo (the group's bot, group's card, group's ledger). Members who want a personal bot FORK it, run their own card/budget/chat, and keep their own P&L — personal instances never post to the flagship's chat or write to its ledger.
+**League model (decided at kickoff):** every participant runs their OWN bot from this template — own idea, own $100, own card, own Telegram chat, own P&L. Use GitHub's *Use this template* (or fork), then run the adopt-bot skill below. The upstream repo doubles as the league roster: PR your row into `REGISTRY.md`. Bots never share a ledger or a report chat.
 
 ## Layout
 
 ```
 CLAUDE.md        — the agent's constitution (mission, budget, guardrails, HITL gates)
 AGENTS.md        — pointer for Codex/other agents → read CLAUDE.md
-charter.md       — the group-approved experiment charter v1.0 (placeholder until frozen)
+charter.md       — kickoff decisions + your bot's charter (placeholder until YOU freeze it)
+RAILS.md         — payment-rails picker: what actually worked at the kickoff, by geography
+playbooks.md     — the four avenues: time-to-first-dollar, KYC, ToS landmines, first probe
+REGISTRY.md      — league roster + the comparable weekly report format
 state.md         — bounded working memory: snapshot, open bets, next actions, HITL queue (agent rewrites daily)
 ledger.md        — every cent in and out; the single source of truth for P&L
 decisions.md     — decision log: what the agent chose, why, expected vs actual, EVIDENCE
 predictions.md   — members' probabilistic predictions (with confidence %), locked at kickoff, scored at retro
-retro.md         — the humans' weekly retro: reconciliation, intervention count, surprises (bot-manager owns it)
+retro.md         — the owner's weekly retro: reconciliation, intervention count, surprises
+approvals/       — one-time spend-approval tokens + consumption log (see Enforcement)
 .env.example     — expected secrets (copy to .env; .env is gitignored)
 prompts/
   kickoff.md     — first-run prompt (shadow mode: plan only, no spending)
   daily-loop.md  — the recurring "hustle" prompt
-.claude/skills/
-  daily-report/  — posts the one-line P&L to Telegram
+.claude/
+  skills/adopt-bot/         — the setup interview: "adopt this bot" → fills every blank
+  skills/daily-report/      — posts the one-line P&L to Telegram
+  skills/request-approval/  — pushes HITL approval requests to the owner (Telegram ping + state.md row)
+  hooks/spend-gate.sh       — PreToolUse hook that blocks payment-pattern commands without approval
 ```
 
-## How to run (Claude Code; Codex works via AGENTS.md)
+## Your first 24 hours (prep week runbook)
 
-Order matters — the session picks the avenue BEFORE the agent plans:
+1. **Template/fork this repo** (private is fine — your ledger will contain real numbers).
+2. **Open Claude Code in it and say `adopt this bot`.** The adopt-bot skill interviews you (avenue, geography → rail, chat, subscriptions, window, keyholders) and fills every `<FILL>` and blank across the repo. ~15 minutes, no code.
+3. **Do the human-only setup** it hands you at the end, per `RAILS.md`: payment rail + KYC, agent email, GitHub account, Telegram chat + bot. These are yours by design — see *What the model will refuse* below.
+4. **Shadow kickoff:** `claude "$(cat prompts/kickoff.md)"` — the agent produces a plan + budget forecast, NO real transactions.
+5. **Review the plan** (the first human-approval moment) and PR your row to the upstream `REGISTRY.md`.
+6. **Launch day (Fri Jul 10):** freeze your charter — delete the PLACEHOLDER banner block in `charter.md`; that deletion IS the freeze — then attach the funded card, run ONE < $5 end-to-end test transaction to prove the rail, and wire the daily loop: `crontab -e` → `0 9 * * * cd /path/to/money-bot && claude -p "$(cat prompts/daily-loop.md)" >> logs/daily.log 2>&1`
 
-1. At the kickoff session: pick the avenue, agree the charter, paste it into `charter.md` (charter.md is the single source of truth; every decided value elsewhere is a copy of it)
-2. Fill in the blanks in `CLAUDE.md`, `ledger.md`, and the Roles block below FROM the charter
-3. Copy `.env.example` → `.env` and fill in (never commit `.env`)
-4. First run — shadow mode: `claude "$(cat prompts/kickoff.md)"` — the agent produces a plan + budget forecast, NO real transactions
-5. Group/owner reviews the plan — the first human-approval moment of the experiment
-6. Daily loop thereafter: `claude "$(cat prompts/daily-loop.md)"` — from the RUNTIME machine (below), wired as a cron/scheduled agent
+## Roles (league mode: you wear most hats — name them anyway)
 
-## Roles & runtime (fill in at kickoff — bots with no home die by Tuesday)
+- **Owner = card/KYC/tax holder = bot-manager.** You run the weekly reconciliation + retro (`retro.md`, no code required), score prediction trends, and bring the numbers to the meetup.
+- **Runtime:** a named always-on machine (bots with no home die by Tuesday). Compute costs: your existing LLM subscription; report anything beyond it in the weekly net line.
+- **Daily human touch (< 5 min, non-negotiable):** clear `state.md` pending-approvals and blockers — a blocked agent is an idle agent, and idle agents drift. You won't need to poll: the request-approval skill pings you on Telegram the moment a gate fires (`TELEGRAM_OWNER_CHAT_ID`); spend approvals are granted with `touch approvals/APPROVE`, human steps by doing them and marking the row done. Steering budget: ~1 intervention/day, logged (week 1 exempt).
+- **The weekly meetup is the league's cross-bot review:** everyone brings the same 5-line report (format in `REGISTRY.md`), disputes over stranger/insider tags get adjudicated there.
 
-- **Runtime:** ____________ (named always-on machine or cloud worker + its owner). Example wiring: `crontab -e` → `0 9 * * * cd /path/to/money-bot && claude -p "$(cat prompts/daily-loop.md)" >> logs/daily.log 2>&1`
-- **API/compute costs paid by:** ____________ (reported in the weekly net line — compute can quietly exceed the card budget; see the $47k-loop case)
-- **Card/wallet owner (the named human carrying KYC + tax responsibility):** ____________
-- **Week-1 bot-manager:** ____________ — rotates weekly. The job, concretely: run the weekly reconciliation + retro (`retro.md` — no code required), score prediction trends, adjudicate disputed stranger/insider tags, ship one improvement PR to the constitution (a dev can pair on the PR if the manager doesn't use git)
-- **Repo admin (merges constitution PRs; amendments to the frozen charter need a meeting decision, not just a PR):** ____________
-- **Daily human touch (anyone, <5 min):** clear `state.md` pending-approvals and blockers — a blocked agent is an idle agent, and idle agents drift
+Non-developers participate fully: adopt-bot needs no code, the retro needs no code, predictions and ledger audits need no code.
 
-Non-developers participate fully: make a prediction, own the weekly reconciliation/retro, audit the ledger — none of it needs a terminal.
+## What the model will refuse (by design — plan around it)
+
+Observed live at the kickoff session: Claude refused account signup steps outright (*"my operating rules prohibit me from completing account creation"*), refused entering emailed verification codes, and the constitution independently bars it from CAPTCHAs and raw card numbers. Don't fight this and don't route around it with a more compliant model — these refusal points map exactly onto the charter's human gates. Budget your own time for: signups on human platforms, KYC, verification codes/magic links, CAPTCHAs, 3-D Secure confirmations, and any manual-card checkout.
+
+## Enforcement — three tiers (know which one you're trusting)
+
+1. **Prompts** (constitution, daily-loop gates) = advice. Necessary, not sufficient.
+2. **The spend-gate hook** (`.claude/hooks/spend-gate.sh`, wired via `.claude/settings.json`) = a speed bump with teeth: any Bash command matching payment patterns is blocked unless a one-time token exists. The agent writes the request to `state.md`; you grant exactly one execution with `touch approvals/APPROVE` (consumed + logged to `approvals/log.md` on use). While the charter still contains its placeholder banner, the hook blocks payment-pattern commands unconditionally — shadow mode with teeth. Limits: it sees Bash, not browser clicks — which is fine, because browser checkouts are a HUMAN step per constitution rule 6.
+3. **The card limit** = physics. The only guardrail that holds when everything above fails. Never attach a card whose limit you wouldn't burn.
 
 ## Rules that are not optional
 
@@ -53,18 +66,20 @@ Non-developers participate fully: make a prediction, own the weekly reconciliati
 - Cards are merchant-locked, one per merchant; the agent never handles a raw card number in the open.
 - Every transaction gets a `ledger.md` row BEFORE the money moves (agent writes intent, then result).
 - Every claimed success needs an evidence link. Weekly, a HUMAN reconciles the ledger against the card + processor dashboards (agents misread their own dashboards — see AI Village).
-- Human does: KYC, account creation, payment method attachment, physical steps, cold-outreach approvals, and everything per charter gates.
+- Human does: KYC, human-platform account creation, payment method attachment, physical steps, cold-outreach approvals, and everything per charter gates.
+- The report chat is write-only for the agent: it streams, it never reads. Owner talks to the bot through the repo, not the chat.
 - If the agent can't explain a spend in one sentence in `decisions.md`, it doesn't spend.
 
 ## Kill switch
 
-> Note: this section and `.env.example` assume the proposed Privacy.com + Stripe stack. If the charter freeze picks a different rail (e.g. crypto wallet), update BOTH before go-live — a kill switch pointing at the wrong provider is not a kill switch.
+> Match this to YOUR rail from `RAILS.md` before go-live — a kill switch pointing at the wrong provider is not a kill switch.
 
-- Pause the card: **Privacy.com dashboard** (fastest, always works — verify you can do this BEFORE go-live; the CLI `privacy cards pause <token>` only if installed and authed)
-- Revoke the Stripe restricted key: Stripe dashboard → API keys
-- Stop the loop: kill the cron/scheduled session on the runtime machine
-- Keyholders and auto-stop conditions: see `charter.md`
+- **Prepaid/neobank rail (the league's mainstream path):** freeze the card in the bank app (Revolut: Cards → Freeze). Verify you can do it BEFORE go-live.
+- **Privacy.com:** pause the card in the dashboard (fastest, always works); the CLI only if installed and authed.
+- **Stripe (if selling):** revoke the restricted key: dashboard → API keys.
+- Stop the loop: kill the cron/scheduled session on the runtime machine.
+- Keyholders and auto-stop conditions: your `charter.md`.
 
 ## Shadow mode — what actually enforces it
 
-Two layers: (1) `daily-loop.md` step 0 halts spending while `charter.md` is a placeholder — that's prompt-level, i.e. advice; (2) the real teeth: **no funded card or payment method is attached until the charter is frozen**. Don't wire a live card at the kickoff session.
+Three layers: (1) `daily-loop.md` step 0 halts spending while `charter.md` contains its placeholder banner — prompt-level, i.e. advice; (2) the spend-gate hook hard-blocks payment-pattern commands for the same condition; (3) the real teeth: **no funded card or payment method is attached until you freeze the charter**. Don't wire a live card during prep week.

@@ -9,3 +9,4 @@ __pycache__/
 *.pyc
 logs/*
 !logs/.gitkeep
+approvals/APPROVE
