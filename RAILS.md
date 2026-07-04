@@ -4,15 +4,29 @@ Field-tested live at the kickoff session (2026-07-03). This is the part of the e
 50 minutes of a room full of engineers — don't re-discover it. Pick by your situation, not by
 what's coolest.
 
-## The decision tree
+## You need TWO rails, not one
+
+Every bot needs a **spend rail** (where its $100 leaves: image gen, ad credit, directory boosts,
+the launch-day <$5 test transaction) and a **receive rail** (where revenue lands). They are usually
+DIFFERENT systems — picking a receive rail does not exempt you from picking a spend rail. The one
+exception is Polymarket, a true closed loop where both live in one wallet.
+
+### Spend rail — every bot picks exactly one
 
 | Your situation | Rail | Agent's role | Notes |
 |---|---|---|---|
 | US resident (SSN, US address) | **Privacy.com** virtual cards | Agent can mint merchant-locked capped cards via the official MCP | KYC took minutes at the session. The MCP costs $5/mo — if one static card is enough, skip the MCP and just set the card's hard limit in the dashboard |
 | Everyone else (EU/UK/GE/NZ/...) | **Neobank virtual/disposable card** (Revolut, Wise) with a hard limit | NONE at checkout — the agent prepares the purchase, YOU pay (constitution rule 6) | The league's mainstream path. Revolut has no agent API for personal accounts — that's fine, the card limit is the guardrail, not the API |
 | No bank you want anywhere near this | **Prepaid Visa gift card** (Tremendous, or retail/Amazon) | Same — human checkout | Zero KYC exposure; the limit is literally the card's face value |
-| Closed-loop avenue (Polymarket) | **Crypto wallet** funded with exactly the budget | Agent can operate inside the loop | Spend and earn in ONE system — no card at all. Mind taxes and your jurisdiction's access rules |
-| Telegram bot / mini-app avenue | **Telegram Stars** | Fully agent-operable | No KYC, no card for receiving; payouts have a ~21-day hold, so "verified revenue" = Stars received, cash lands after week 4 |
+| Polymarket avenue only | **Crypto wallet** funded with exactly the budget | Agent can operate inside the loop | The one true closed loop: spend AND receive in the same wallet, no card at all. Mind taxes and your jurisdiction's access rules |
+
+### Receive rail — depends on your avenue
+
+| Avenue | Rail | Notes |
+|---|---|---|
+| Telegram bot / mini-app | **Telegram Stars** | No KYC, fully agent-operable for receiving; payouts have a ~21-day hold, so "verified revenue" = Stars received, cash lands after week 4. **You still need a spend rail from the table above** — Stars can't pay for image gen or ad credit |
+| Productized service / storefront | **Stripe Payment Links** (or the storefront's processor) | Stripe account is the owner's KYC; use a RESTRICTED key only |
+| Polymarket | same crypto wallet as the spend side | see above |
 
 ## What we actually verified on the call (so you don't have to)
 

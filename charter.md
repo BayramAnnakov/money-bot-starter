@@ -1,7 +1,8 @@
 # Experiment Charter v1.0
 
 > PLACEHOLDER — this bot's owner fills the charter via the `adopt-bot` skill during prep week,
-> then FREEZES it at launch by deleting this banner block. Deleting the banner IS the freeze act.
+> then FREEZES it at launch by deleting this banner block AND the pre-freeze defaults section
+> below (the filled charter then owns the toolset). Deleting the banner IS the freeze act.
 > Until then the agent runs in SHADOW MODE ONLY (plans, no spending) — enforced by the daily-loop
 > step 0, the spend-gate hook, and the fact that no funded card is attached.
 
@@ -25,7 +26,7 @@ Decided live at the Build Session; individual charters inherit these unless the 
 - **Duration:** 4 weeks from launch (launch target 2026-07-10; this week is prep). Week 5: public write-up regardless of outcome.
 - **On the table (per-bot choice):** work-hours-only operating window — solves 3-D Secure confirmations arriving while the owner sleeps.
 
-## Pre-freeze defaults (in force while this file is a placeholder)
+## Pre-freeze defaults (in force ONLY while this file is a placeholder — delete this whole section as part of the freeze)
 
 - **Shadow mode**: plans and drafts only; zero real transactions; no probes.
 - **Approved tools** (the referent of constitution rule 7 until the frozen charter replaces it): the official Privacy.com MCP (`mcp.privacy.com`) *or* the manual prepaid/virtual-card path (no payment tool at all — checkout is a human step, see `RAILS.md`); official Stripe plugin (`mcp.stripe.com`) if selling via Payment Links; AgentMail for agent email; the Telegram reporting tool configured by the humans. Nothing else.
@@ -35,7 +36,8 @@ Decided live at the Build Session; individual charters inherit these unless the 
 
 - **Bot name / owner:** ____________
 - **Avenue (+ runner-up for the day-10 pivot):** ____________
-- **Payment rail (from `RAILS.md`):** ____________
+- **Spend rail + receive rail (from `RAILS.md` — two answers, not one):** ____________
+- **Pinned toolset / MCP servers (the referent of constitution rule 7 after freeze — derived from your rails + the Telegram reporting tool; adding anything later needs human approval):** ____________
 - **Runtime (named always-on machine + owner) & pinned model:** ____________
 - **Owner's pre-existing subscriptions the bot may use free:** ____________
 - **Telegram report chat:** ____________

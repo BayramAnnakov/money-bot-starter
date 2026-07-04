@@ -24,8 +24,8 @@ through the repo (token file or an updated row), not through messages.
    ```
 
 3. **Send it** to the chat id in `TELEGRAM_OWNER_CHAT_ID` (fall back to `TELEGRAM_CHAT_ID` if unset)
-   via the available Telegram tool. If no Telegram tool is available, print the message and log the
-   delivery failure under Blockers.
+   via the available Telegram tool. If the tool OR both chat-id env vars are missing, print the
+   message, log the delivery failure under Blockers, and never invent or guess a chat id.
 4. **Don't block on the answer.** Continue other non-gated work; check resolution on the next
    daily run (spend approvals arrive as the `approvals/APPROVE` token; human steps arrive as the
    row marked done).

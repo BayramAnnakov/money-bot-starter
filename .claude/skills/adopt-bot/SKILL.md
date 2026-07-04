@@ -27,7 +27,8 @@ Collect, in 3-4 conversational rounds:
 2. **Avenue:** walk them through the four options in `playbooks.md` (one line each); get the pick
    AND the runner-up (day-10 pivot target). If they're stuck, ask what they already do well —
    avenue 1 (productized service) is the default for anyone with a marketable skill.
-3. **Money:** geography/residency → recommend a rail from the `RAILS.md` decision tree and confirm;
+3. **Money:** geography/residency → recommend a SPEND rail and a RECEIVE rail from `RAILS.md`
+   (two answers — Stars/closed-loop avenues still need a spend card) and confirm;
    budget (league default $100 — deviating means leaving league standings); spend gate (default $20);
    who is the second kill-switch keyholder besides the owner.
 4. **Operations:** Telegram report chat (do they have a bot + chat yet? if not, point to the checklist);
@@ -40,8 +41,10 @@ Collect, in 3-4 conversational rounds:
 
 Apply the answers everywhere; keep formatting intact:
 
-- `charter.md`: fill the "Your bot's charter" section (leave "where the money ends up" blank if
-  undecided — it's a launch-day group decision). Do NOT touch the banner.
+- `charter.md`: fill the "Your bot's charter" section — including BOTH rails (spend + receive,
+  per `RAILS.md`) and the Pinned toolset line derived from those rails plus the Telegram reporting
+  tool. Leave "where the money ends up" blank if undecided — it's a launch-day group decision.
+  Do NOT touch the banner or delete the pre-freeze section (both go at freeze, by the owner).
 - `CLAUDE.md`: replace every `<FILL>` (avenue, budget, gate, probe math = budget/10).
 - `ledger.md`: starting balance/limit, timezone; start date stays open until launch (note "launch: 2026-07-10").
 - `state.md`: initialize the snapshot header with the bot name and Day 0.
@@ -52,8 +55,8 @@ Apply the answers everywhere; keep formatting intact:
 
 ## Step 3 — Verify
 
-- Grep for leftover `<FILL` markers and `____` blanks in CLAUDE.md/ledger.md — report any that
-  remain and why (only acceptable: launch-day values).
+- Grep for leftover `<FILL` markers and `____` blanks in CLAUDE.md, ledger.md, charter.md, AND
+  state.md — report any that remain and why (only acceptable: launch-day values).
 - Confirm the PLACEHOLDER banner is still in `charter.md` (shadow mode intact).
 - Echo a 6-line summary of the personalized setup for the owner to sanity-check.
 
@@ -61,11 +64,18 @@ Apply the answers everywhere; keep formatting intact:
 
 Print it explicitly — these are things YOU must not and cannot do (see README §What the model will refuse):
 
-1. Payment rail setup per `RAILS.md` (KYC, card creation, hard limit set) — but attach NO funded card until launch day.
-2. Agent email (AgentMail or a fresh workspace account) — expect spam-folder + footer gotchas (RAILS.md).
-3. GitHub account for the bot, if the avenue needs one.
-4. Telegram: create the report bot + group chat, put the token + BOTH chat ids (report chat, your DM for approval pings) into `.env`.
-5. PR the registry row to the upstream repo.
-6. Run the shadow kickoff: `claude "$(cat prompts/kickoff.md)"` and review the plan.
-7. On launch day (2026-07-10): delete the charter banner (the freeze), attach the card, one <$5
-   end-to-end test transaction, wire the cron.
+1. SPEND rail setup per `RAILS.md` (KYC, card creation, hard limit set) — every bot needs one,
+   even Stars/closed-loop avenues; but attach NO funded card until launch day.
+2. **Your PRODUCT surface — the thing that actually takes money.** Avenue-specific, so spell it
+   out for THEIR avenue: Telegram Stars → create the product bot/mini-app via @BotFather AND
+   enable Stars payments (this is a separate bot from the report bot); productized service /
+   storefront → the site + Stripe Payment Links (restricted key); Polymarket → the funded wallet.
+   No product surface = launched but unable to earn.
+3. Agent email (AgentMail or a fresh workspace account) — expect spam-folder + footer gotchas (RAILS.md).
+4. GitHub account for the bot, if the avenue needs one.
+5. Telegram reporting: create the report bot + group chat, put the token + BOTH chat ids (report
+   chat, your DM for approval pings) into `.env`.
+6. Registry row to the upstream repo — PR it, or simply send the row to Bayram (no git needed).
+7. Run the shadow kickoff: `claude "$(cat prompts/kickoff.md)"` and review the plan.
+8. On launch day (2026-07-10): delete the charter banner AND the pre-freeze defaults section
+   (the freeze), attach the card, one <$5 end-to-end test transaction, wire the cron.

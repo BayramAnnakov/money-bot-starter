@@ -21,6 +21,8 @@ decisions.md     — decision log: what the agent chose, why, expected vs actual
 predictions.md   — members' probabilistic predictions (with confidence %), locked at kickoff, scored at retro
 retro.md         — the owner's weekly retro: reconciliation, intervention count, surprises
 approvals/       — one-time spend-approval tokens + consumption log (see Enforcement)
+evidence/        — screenshots backing ledger/decision claims (REDACT card numbers + PII first)
+logs/            — daily-loop run logs (gitignored; the cron line writes here)
 .env.example     — expected secrets (copy to .env; .env is gitignored)
 prompts/
   kickoff.md     — first-run prompt (shadow mode: plan only, no spending)
@@ -39,7 +41,7 @@ prompts/
 3. **Do the human-only setup** it hands you at the end, per `RAILS.md`: payment rail + KYC, agent email, GitHub account, Telegram chat + bot. These are yours by design — see *What the model will refuse* below.
 4. **Shadow kickoff:** `claude "$(cat prompts/kickoff.md)"` — the agent produces a plan + budget forecast, NO real transactions.
 5. **Review the plan** (the first human-approval moment) and PR your row to the upstream `REGISTRY.md`.
-6. **Launch day (Fri Jul 10):** freeze your charter — delete the PLACEHOLDER banner block in `charter.md`; that deletion IS the freeze — then attach the funded card, run ONE < $5 end-to-end test transaction to prove the rail, and wire the daily loop: `crontab -e` → `0 9 * * * cd /path/to/money-bot && claude -p "$(cat prompts/daily-loop.md)" >> logs/daily.log 2>&1`
+6. **Launch day (Fri Jul 10):** freeze your charter — delete the PLACEHOLDER banner block AND the pre-freeze defaults section in `charter.md` (your filled charter now owns the toolset); that deletion IS the freeze — then attach the funded card, run ONE < $5 end-to-end test transaction to prove the spend rail, and wire the daily loop: `crontab -e` → `0 9 * * * cd /path/to/money-bot && claude -p "$(cat prompts/daily-loop.md)" >> logs/daily.log 2>&1` (ask your agent to set up the cron line — that's a one-sentence request in Claude Code)
 
 ## Roles (league mode: you wear most hats — name them anyway)
 
@@ -57,7 +59,7 @@ Observed live at the kickoff session: Claude refused account signup steps outrig
 ## Enforcement — three tiers (know which one you're trusting)
 
 1. **Prompts** (constitution, daily-loop gates) = advice. Necessary, not sufficient.
-2. **The spend-gate hook** (`.claude/hooks/spend-gate.sh`, wired via `.claude/settings.json`) = a speed bump with teeth: any Bash command matching payment patterns is blocked unless a one-time token exists. The agent writes the request to `state.md`; you grant exactly one execution with `touch approvals/APPROVE` (consumed + logged to `approvals/log.md` on use). While the charter still contains its placeholder banner, the hook blocks payment-pattern commands unconditionally — shadow mode with teeth. Limits: it sees Bash, not browser clicks — which is fine, because browser checkouts are a HUMAN step per constitution rule 6.
+2. **The spend-gate hook** (`.claude/hooks/spend-gate.sh`, wired via `.claude/settings.json`) = a speed bump with teeth: any Bash command matching payment patterns is blocked unless a one-time token exists. The agent writes the request to `state.md`; you grant exactly one execution with `touch approvals/APPROVE` (consumed + logged to `approvals/log.md` on use). While the charter still contains its placeholder banner, the hook blocks payment-pattern commands unconditionally — shadow mode with teeth. Limits: it sees Bash, not browser clicks — which is fine, because browser checkouts are a HUMAN step per constitution rule 6. **Claude Code only:** other runners (Codex etc., via AGENTS.md) don't read `.claude/settings.json` and silently lose this tier — they run on tier 1 + tier 3 alone, so keep the card limit tighter there.
 3. **The card limit** = physics. The only guardrail that holds when everything above fails. Never attach a card whose limit you wouldn't burn.
 
 ## Rules that are not optional
