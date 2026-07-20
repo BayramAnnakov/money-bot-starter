@@ -26,6 +26,10 @@ Five lines, same order, every bot — comparability is the point:
 Plus your `retro.md` entry (reconciliation Y/N, intervention count). Predictions: `predictions.md`
 in YOUR repo — cross-bot predictions are encouraged and get scored the same at week 4.
 
+**Week-4 cross-bot analysis** blind-concats every repo's `metrics.csv`, `runs.csv`, `forecasts.md`
+and `interventions.md` — the schemas are league-frozen (see `OBSERVABILITY.md`). A bot that edited
+columns self-excludes from the aggregate.
+
 ## League rules recap (full text: charter.md kickoff decisions)
 
 $100, no top-ups (top-up = exit) · >$20 spend gated · daily one-liner to your bot's chat ·

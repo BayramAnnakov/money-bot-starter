@@ -38,6 +38,17 @@ if [ -f "$TOKEN" ]; then
     echo '```'
   } >> "$REPO/approvals/log.md"
   rm -f "$TOKEN"
+  # Transparency (best-effort, never affects the verdict): announce consumption in the group chat
+  if [ -f "$REPO/.env" ]; then
+    TG_TOKEN=$(grep -E '^TELEGRAM_BOT_TOKEN=' "$REPO/.env" | head -1 | cut -d= -f2- | tr -d ' "')
+    TG_CHAT=$(grep -E '^TELEGRAM_CHAT_ID=' "$REPO/.env" | head -1 | cut -d= -f2- | tr -d ' "')
+    if [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
+      curl -s -m 5 -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+        -d chat_id="${TG_CHAT}" \
+        -d text="✅ Spend-approval token consumed (one gated command executed — see approvals/log.md)" \
+        >/dev/null 2>&1 || true
+    fi
+  fi
   exit 0
 fi
 

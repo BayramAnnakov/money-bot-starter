@@ -8,6 +8,8 @@ description: Post the money bot's daily one-line P&L update to the group Telegra
 1. Read `state.md` (snapshot) and today's entry in `decisions.md`.
 2. Compose exactly one line:
    `Day N: balance $A | revenue: stranger $S / insider $I | today: <one action, ≤10 words> | next: <one action, ≤10 words>`
+   Optionally add ONE second line — `💭 <the day's most useful learning, ≤15 words>` — when the
+   journal entry produced a real insight. Never more than one; never let it become a thread.
    - Shadow detection: shadow mode = `charter.md` still contains the word PLACEHOLDER (same signal the daily loop and spend-gate hook use — do NOT infer it from state.md, which may be stale). In shadow mode, prefix the line with `[SHADOW]` and report "Day 0 (shadow)".
    - After freeze: N = days since the start date in `ledger.md`; if the start date is unfilled, say "Day ?" and flag it
    - balance = card balance after today's transactions

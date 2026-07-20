@@ -41,6 +41,7 @@ Decided live at the Build Session; individual charters inherit these unless the 
 - **Runtime (named always-on machine + owner) & pinned model:** ____________
 - **Owner's pre-existing subscriptions the bot may use free:** ____________
 - **Telegram report chat:** ____________
+- **Funnel columns (what funnel_a/b/c mean in `metrics.csv` for your avenue, e.g. visits / checkout clicks / paid):** ____________
 - **Operating window / timezone:** ____________
 - **Kill-switch keyholders (owner + one more):** ____________
 - **Disclosure line (exact wording for bios/listings):** ____________

@@ -18,11 +18,19 @@ REGISTRY.md      — league roster + the comparable weekly report format
 state.md         — bounded working memory: snapshot, open bets, next actions, HITL queue (agent rewrites daily)
 ledger.md        — every cent in and out; the single source of truth for P&L
 decisions.md     — decision log: what the agent chose, why, expected vs actual, EVIDENCE
+journal.md       — narrative trail: one bounded entry per run (beliefs, actions, surprises, updates)
+forecasts.md     — the bot's calibration ledger: verifiable claim + p + resolve-by, Brier-scored
 predictions.md   — members' probabilistic predictions (with confidence %), locked at kickoff, scored at retro
 retro.md         — the owner's weekly retro: reconciliation, intervention count, surprises
+interventions.md — every human touch, priced in owner-minutes (revenue per human-hour = the sustainability number)
+metrics.csv      — one machine-readable row per day; league-frozen schema (see OBSERVABILITY.md)
+runs.csv         — run telemetry written by the wrapper: status, duration, api cost
+OBSERVABILITY.md — the audit map: four layers, single-writer rule, retention, week-4 analysis recipe
 approvals/       — one-time spend-approval tokens + consumption log (see Enforcement)
 evidence/        — screenshots backing ledger/decision claims (REDACT card numbers + PII first)
-logs/            — daily-loop run logs (gitignored; the cron line writes here)
+logs/            — raw run transcripts + errors (gitignored; retained locally — they're the audit ground truth)
+scripts/
+  run-daily.sh   — canonical cron entrypoint: transcript capture, cost telemetry, crash ping, auto-commit
 .env.example     — expected secrets (copy to .env; .env is gitignored)
 prompts/
   kickoff.md     — first-run prompt (shadow mode: plan only, no spending)
@@ -41,7 +49,7 @@ prompts/
 3. **Do the human-only setup** it hands you at the end, per `RAILS.md`: payment rail + KYC, agent email, GitHub account, Telegram chat + bot. These are yours by design — see *What the model will refuse* below.
 4. **Shadow kickoff:** `claude "$(cat prompts/kickoff.md)"` — the agent produces a plan + budget forecast, NO real transactions.
 5. **Review the plan** (the first human-approval moment) and PR your row to the upstream `REGISTRY.md`.
-6. **Launch day (Fri Jul 10):** freeze your charter — delete the PLACEHOLDER banner block AND the pre-freeze defaults section in `charter.md` (your filled charter now owns the toolset); that deletion IS the freeze — then attach the funded card, run ONE < $5 end-to-end test transaction to prove the spend rail, and wire the daily loop: `crontab -e` → `0 9 * * * cd /path/to/money-bot && claude -p "$(cat prompts/daily-loop.md)" >> logs/daily.log 2>&1` (ask your agent to set up the cron line — that's a one-sentence request in Claude Code)
+6. **Launch day (Fri Jul 10):** freeze your charter — delete the PLACEHOLDER banner block AND the pre-freeze defaults section in `charter.md` (your filled charter now owns the toolset); that deletion IS the freeze — then attach the funded card, run ONE < $5 end-to-end test transaction to prove the spend rail, and wire the daily loop: `crontab -e` → `0 9 * * * /path/to/money-bot/scripts/run-daily.sh` (ask your agent to set up the cron line — that's a one-sentence request in Claude Code). The wrapper — never bare `claude` in cron — captures the full run transcript, records cost telemetry to `runs.csv`, pings you on crashes, and auto-commits, so every run leaves a trace even when the agent inside it fails.
 
 ## Roles (league mode: you wear most hats — name them anyway)
 
