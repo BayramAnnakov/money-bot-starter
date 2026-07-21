@@ -31,8 +31,11 @@ through the repo (token file or an updated row), not through messages.
    actionable ping; the group line is league transparency. Same content rules: no secrets, no
    card data, no counterparty PII. The chat stays write-only for you.
 4. **Don't block on the answer.** Continue other non-gated work; check resolution on the next
-   daily run (spend approvals arrive as the `approvals/APPROVE` token; human steps arrive as the
-   row marked done).
+   daily run. Spend approvals arrive as the `approvals/APPROVE` token — created EITHER by the owner
+   running `touch approvals/APPROVE` on the runtime machine, OR by the owner replying `approve` in
+   their DM, which `poll-approvals.sh` accepts **only** from the numeric `TELEGRAM_OWNER_CHAT_ID`
+   (the group and all other DMs are ignored). You never read chat yourself; you only ever see the
+   token appear. Human steps arrive as the state.md row marked done.
 4b. **Close the loop publicly.** On the run that observes a resolution, post
    `✅ APPROVAL #<n> resolved: <what> — <spend approved / step done by owner>` to the group and
    append the row to `interventions.md` (owner fills minutes). Every ⏸️ eventually gets its ✅ —

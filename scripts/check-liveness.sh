@@ -5,6 +5,7 @@
 #
 # Cron:  0 12,15,18 * * *  /path/to/money-bot/scripts/check-liveness.sh
 set -u
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 cd "$(cd "$(dirname "$0")/.." && pwd)" || exit 1
 [ -f .env ] && set -a && . ./.env && set +a
 
@@ -25,7 +26,7 @@ in_window() { # honor OPERATING_WINDOW="HH:MM-HH:MM" if set; else always in-wind
   [ "$now" -ge "$s" ] && [ "$now" -le "$e" ]
 }
 complete_today() {
-  grep -q "$TODAY" journal.md 2>/dev/null && grep -q "^$TODAY," metrics.csv 2>/dev/null
+  grep -qE "^## Day .*$TODAY" journal.md 2>/dev/null && grep -q "^$TODAY," metrics.csv 2>/dev/null
 }
 
 # Healthy: today's trail exists → clear any alert flag and leave quietly.
@@ -35,9 +36,14 @@ if complete_today; then rm -f .watchdog-alerted 2>/dev/null; exit 0; fi
 STALE=0
 if [ -f .last-alive ]; then
   la="$(cat .last-alive 2>/dev/null)"
-  last_epoch=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$la" +%s 2>/dev/null || date -d "$la" +%s 2>/dev/null || echo 0)
+  # .last-alive is UTC (trailing Z) — parse AS UTC (TZ=UTC0), or BSD date reads it as local and skews staleness.
+  last_epoch=$(TZ=UTC0 date -j -f "%Y-%m-%dT%H:%M:%SZ" "$la" +%s 2>/dev/null || date -u -d "$la" +%s 2>/dev/null || echo 0)
   now_epoch=$(date +%s)
-  [ "$last_epoch" -gt 0 ] && [ $(( (now_epoch - last_epoch) / 3600 )) -ge "$STALE_AFTER_HOURS" ] && STALE=1
+  if [ "$last_epoch" -le 0 ]; then
+    STALE=1   # unparseable/corrupt heartbeat reads as DEAD, never as alive
+  elif [ $(( (now_epoch - last_epoch) / 3600 )) -ge "$STALE_AFTER_HOURS" ]; then
+    STALE=1
+  fi
 else
   STALE=1   # never recorded a good run
 fi

@@ -32,6 +32,7 @@ logs/            — raw run transcripts + errors (gitignored; retained locally 
 scripts/
   run-daily.sh      — canonical cron entrypoint: timeout, completion-contract check, auto-resume, heartbeat, crash ping, auto-commit
   check-liveness.sh — independent watchdog (no claude dependency): alerts if no complete run when there should be one
+  poll-approvals.sh — owner-only DM approval channel: numeric-id auth, deterministic (no LLM); group + other DMs ignored
 .env.example     — expected secrets + liveness config (copy to .env; .env is gitignored)
 prompts/
   kickoff.md     — first-run prompt (shadow mode: plan only, no spending)
@@ -56,6 +57,7 @@ prompts/
    ```
    0 9 * * *        /path/to/money-bot/scripts/run-daily.sh        # the daily loop (wrapper, never bare `claude`)
    0 12,15,18 * * * /path/to/money-bot/scripts/check-liveness.sh   # independent watchdog, a few times in your window
+   */3 * * * *      /path/to/money-bot/scripts/poll-approvals.sh   # owner-only DM approvals (ignores group + all other DMs)
    @reboot          caffeinate -s                                   # macOS: keep the machine awake through the window
    ```
    The wrapper captures the full transcript, records cost + completion to `runs.csv`, auto-resumes a mid-task stop, pings you on failure, and auto-commits — so every run leaves a trace even when the agent inside it fails. Then create a free **dead-man's-switch** (e.g. healthchecks.io), put its ping URL in `.env` as `HEALTHCHECK_URL`, and it will alert you even if the machine was off all day and *nothing* ran. See `OBSERVABILITY.md §Liveness`.

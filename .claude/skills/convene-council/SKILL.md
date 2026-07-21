@@ -18,8 +18,10 @@ and decide.
 1. **Prefer the installed `/council` skill.** If a `council` skill is available, invoke it via the
    Skill tool with the decision + the same structured packet `ask-advisor` builds (state only, no raw
    web text). It runs the full panel + groupthink check + synthesis.
-2. **Self-contained fallback** (if `/council` isn't installed): spawn 3 sub-agents in parallel, each a
-   distinct named lens over the packet, each blind to the others —
+2. **Self-contained fallback** (if `/council` isn't installed): spawn 3 **read-only, no-tools**
+   sub-agents in parallel (agentType `no-tools-reviewer` or equivalent — text only, no file/Bash/MCP
+   tools, so a panelist can't act), each a distinct named lens over the packet, each blind to the
+   others —
    - a **distribution / growth realist** (is this actually reachable cold, or a mirage?),
    - a **unit-economics + calibration skeptic** (does the math clear fees + human attention? is a
      forecast fooling itself?),

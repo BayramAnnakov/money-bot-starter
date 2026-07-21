@@ -14,6 +14,14 @@ CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 # jq missing or schema drift: fall back to scanning the raw payload
 [ -z "$CMD" ] && CMD="$INPUT"
 
+# The agent may NEVER mint its own approval token — only the human runs `touch approvals/APPROVE`
+# in their own shell (which the hook never sees). Any agent Bash touching that path is a
+# self-approval attempt: block unconditionally, before the payment check.
+if printf '%s' "$CMD" | grep -qE 'approvals/APPROVE'; then
+  echo "BLOCKED: the agent may not create or modify the approval token. Only the owner runs 'touch approvals/APPROVE'; request it via the request-approval skill." >&2
+  exit 2
+fi
+
 # Conservative payment patterns. False positives are cheap (the agent asks the owner);
 # false negatives are what the card limit is for.
 PATTERN='api\.stripe\.com|stripe .*(charge|payment|payout|checkout|invoice)|payment[-_ ]?(intent|link)|privacy\.com|/v1/(charges|payouts|transfers)|polymarket|usdc|checkout\.'

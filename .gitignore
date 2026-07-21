@@ -13,3 +13,4 @@ approvals/APPROVE
 .last-alive
 .watchdog-alerted
 .run.lock/
+.tg-offset
