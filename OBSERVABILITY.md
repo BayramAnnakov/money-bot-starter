@@ -53,8 +53,37 @@ funnel numbers, defined ONCE in `charter.md` at freeze (e.g. visits, checkout cl
 ## runs.csv schema (wrapper appends one row per run)
 
 ```
-run_id,date,status,exit_code,duration_ms,num_turns,api_cost_usd,transcript
+run_id,date,status,exit_code,duration_ms,num_turns,api_cost_usd,attempts,subtype,complete,transcript
 ```
+
+`status` ∈ `ok | timeout | error | incomplete`. `complete` = 1 iff the day's trail exists
+(journal entry + metrics row) — the **source of truth**: a run is DONE when it leaves a trace,
+regardless of exit code or `subtype`. `attempts` counts the auto-resume retries.
+
+## Liveness — how a stopped bot gets noticed (three layers)
+
+Autonomous agents die silently — API errors, turn/context limits, a closed laptop — and silence
+reads as passivity. Three watchers, each dumber and more reliable than the thing it watches, plus one
+machine-checkable definition of done.
+
+**The completion contract (stale-by-design vs stopped-mid-task):** a run is *done* iff it wrote
+today's `journal.md` entry AND today's `metrics.csv` row. Full trail + clean stop → done, no alert.
+Missing trail, or `subtype:"error_max_turns"`, or a non-zero exit → stopped mid-task → recover, then
+alert. No run at all → cron/machine failure → alert.
+
+1. **The wrapper** (`scripts/run-daily.sh`) — in-run safety: a single-flight lock, a per-attempt
+   `timeout` (a hang can't run forever), reads the stream-json result envelope, checks the completion
+   contract, **auto-resumes once** (the retry re-reads `state.md` and finishes), writes a `.last-alive`
+   heartbeat + pings the external switch on a complete run (and `/fail` on an incomplete one), Telegram-
+   alerts the owner on failure, and commits every run.
+2. **The watchdog** (`scripts/check-liveness.sh`) — independent, **no `claude` dependency**, cron'd a
+   few times inside the operating window: if no complete run exists for today and the last good run is
+   stale (`STALE_AFTER_HOURS`), it pings the owner (and optionally triggers one catch-up run). Catches
+   what the wrapper can't — the cron that never fired while the machine was on.
+3. **The external dead-man's-switch** (`HEALTHCHECK_URL`, e.g. healthchecks.io) — the only thing that
+   catches "the machine was off all day, nothing ran at all": if the wrapper's alive-ping doesn't
+   arrive on schedule, the external service escalates to the owner. One-time human setup; pair with
+   `caffeinate` to keep the machine awake through the operating window.
 
 ## Week-4 analysis recipe (~15 minutes, one bot or the whole league)
 

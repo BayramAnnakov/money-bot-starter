@@ -29,7 +29,7 @@ Decided live at the Build Session; individual charters inherit these unless the 
 ## Pre-freeze defaults (in force ONLY while this file is a placeholder — delete this whole section as part of the freeze)
 
 - **Shadow mode**: plans and drafts only; zero real transactions; no probes.
-- **Approved tools** (the referent of constitution rule 7 until the frozen charter replaces it): the official Privacy.com MCP (`mcp.privacy.com`) *or* the manual prepaid/virtual-card path (no payment tool at all — checkout is a human step, see `RAILS.md`); official Stripe plugin (`mcp.stripe.com`) if selling via Payment Links; AgentMail for agent email; the Telegram reporting tool configured by the humans. Nothing else.
+- **Approved tools** (the referent of constitution rule 7 until the frozen charter replaces it): the official Privacy.com MCP (`mcp.privacy.com`) *or* the manual prepaid/virtual-card path (no payment tool at all — checkout is a human step, see `RAILS.md`); official Stripe plugin (`mcp.stripe.com`) if selling via Payment Links; AgentMail for agent email; the Telegram reporting tool configured by the humans; the decision-support skills `ask-advisor` (Fable 5) and `convene-council`. Nothing else.
 - **Enforcement note**: shadow mode has three layers — the daily-loop step-0 gate (advice), the `spend-gate` hook that blocks payment-pattern commands while this file contains the placeholder banner (speed bump), and NO funded card attached until v1.0 lands here (physics).
 
 ## Your bot's charter (filled by the adopt-bot skill, frozen at launch)
@@ -37,8 +37,10 @@ Decided live at the Build Session; individual charters inherit these unless the 
 - **Bot name / owner:** ____________
 - **Avenue (+ runner-up for the day-10 pivot):** ____________
 - **Spend rail + receive rail (from `RAILS.md` — two answers, not one):** ____________
-- **Pinned toolset / MCP servers (the referent of constitution rule 7 after freeze — derived from your rails + the Telegram reporting tool; adding anything later needs human approval):** ____________
+- **Pinned toolset / MCP servers (the referent of constitution rule 7 after freeze — derived from your rails + the Telegram reporting tool + the decision-support skills; adding anything later needs human approval):** ____________
+- **Advisory stack (models the bot may consult):** advisor = ____________ (default Fable 5, `claude-fable-5`, via `ask-advisor`) · council via `convene-council` (weekly + mandatory pre-pivot)
 - **Runtime (named always-on machine + owner) & pinned model:** ____________
+- **Liveness (fill from `.env`):** operating window ____________ · external dead-man's-switch (`HEALTHCHECK_URL`) set? ____________ · auto-recover on/off ____________
 - **Owner's pre-existing subscriptions the bot may use free:** ____________
 - **Telegram report chat:** ____________
 - **Funnel columns (what funnel_a/b/c mean in `metrics.csv` for your avenue, e.g. visits / checkout clicks / paid):** ____________

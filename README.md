@@ -24,14 +24,15 @@ predictions.md   — members' probabilistic predictions (with confidence %), loc
 retro.md         — the owner's weekly retro: reconciliation, intervention count, surprises
 interventions.md — every human touch, priced in owner-minutes (revenue per human-hour = the sustainability number)
 metrics.csv      — one machine-readable row per day; league-frozen schema (see OBSERVABILITY.md)
-runs.csv         — run telemetry written by the wrapper: status, duration, api cost
-OBSERVABILITY.md — the audit map: four layers, single-writer rule, retention, week-4 analysis recipe
+runs.csv         — run telemetry written by the wrapper: status, duration, api cost, complete?
+OBSERVABILITY.md — the audit map: four layers, single-writer rule, retention, liveness, week-4 recipe
 approvals/       — one-time spend-approval tokens + consumption log (see Enforcement)
 evidence/        — screenshots backing ledger/decision claims (REDACT card numbers + PII first)
 logs/            — raw run transcripts + errors (gitignored; retained locally — they're the audit ground truth)
 scripts/
-  run-daily.sh   — canonical cron entrypoint: transcript capture, cost telemetry, crash ping, auto-commit
-.env.example     — expected secrets (copy to .env; .env is gitignored)
+  run-daily.sh      — canonical cron entrypoint: timeout, completion-contract check, auto-resume, heartbeat, crash ping, auto-commit
+  check-liveness.sh — independent watchdog (no claude dependency): alerts if no complete run when there should be one
+.env.example     — expected secrets + liveness config (copy to .env; .env is gitignored)
 prompts/
   kickoff.md     — first-run prompt (shadow mode: plan only, no spending)
   daily-loop.md  — the recurring "hustle" prompt
@@ -39,6 +40,8 @@ prompts/
   skills/adopt-bot/         — the setup interview: "adopt this bot" → fills every blank
   skills/daily-report/      — posts the one-line P&L to Telegram
   skills/request-approval/  — pushes HITL approval requests to the owner (Telegram ping + state.md row)
+  skills/ask-advisor/       — a Fable-5 diverse-model second opinion on the day's top fork (advice, not command)
+  skills/convene-council/   — a multi-perspective panel for weekly review + mandatory pre-pivot
   hooks/spend-gate.sh       — PreToolUse hook that blocks payment-pattern commands without approval
 ```
 
@@ -49,7 +52,13 @@ prompts/
 3. **Do the human-only setup** it hands you at the end, per `RAILS.md`: payment rail + KYC, agent email, GitHub account, Telegram chat + bot. These are yours by design — see *What the model will refuse* below.
 4. **Shadow kickoff:** `claude "$(cat prompts/kickoff.md)"` — the agent produces a plan + budget forecast, NO real transactions.
 5. **Review the plan** (the first human-approval moment) and PR your row to the upstream `REGISTRY.md`.
-6. **Launch day (Fri Jul 10):** freeze your charter — delete the PLACEHOLDER banner block AND the pre-freeze defaults section in `charter.md` (your filled charter now owns the toolset); that deletion IS the freeze — then attach the funded card, run ONE < $5 end-to-end test transaction to prove the spend rail, and wire the daily loop: `crontab -e` → `0 9 * * * /path/to/money-bot/scripts/run-daily.sh` (ask your agent to set up the cron line — that's a one-sentence request in Claude Code). The wrapper — never bare `claude` in cron — captures the full run transcript, records cost telemetry to `runs.csv`, pings you on crashes, and auto-commits, so every run leaves a trace even when the agent inside it fails.
+6. **Launch day:** freeze your charter — delete the PLACEHOLDER banner block AND the pre-freeze defaults section in `charter.md` (your filled charter now owns the toolset); that deletion IS the freeze — then attach the funded card, run ONE < $5 end-to-end test transaction to prove the spend rail, and wire the schedule (three lines; ask your agent to set them up — a one-sentence request in Claude Code):
+   ```
+   0 9 * * *        /path/to/money-bot/scripts/run-daily.sh        # the daily loop (wrapper, never bare `claude`)
+   0 12,15,18 * * * /path/to/money-bot/scripts/check-liveness.sh   # independent watchdog, a few times in your window
+   @reboot          caffeinate -s                                   # macOS: keep the machine awake through the window
+   ```
+   The wrapper captures the full transcript, records cost + completion to `runs.csv`, auto-resumes a mid-task stop, pings you on failure, and auto-commits — so every run leaves a trace even when the agent inside it fails. Then create a free **dead-man's-switch** (e.g. healthchecks.io), put its ping URL in `.env` as `HEALTHCHECK_URL`, and it will alert you even if the machine was off all day and *nothing* ran. See `OBSERVABILITY.md §Liveness`.
 
 ## Roles (league mode: you wear most hats — name them anyway)
 

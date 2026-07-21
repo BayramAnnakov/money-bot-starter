@@ -10,3 +10,6 @@ __pycache__/
 logs/*
 !logs/.gitkeep
 approvals/APPROVE
+.last-alive
+.watchdog-alerted
+.run.lock/
