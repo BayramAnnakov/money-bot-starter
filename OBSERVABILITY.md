@@ -79,7 +79,13 @@ alert. No run at all → cron/machine failure → alert.
 2. **The watchdog** (`scripts/check-liveness.sh`) — independent, **no `claude` dependency**, cron'd a
    few times inside the operating window: if no complete run exists for today and the last good run is
    stale (`STALE_AFTER_HOURS`), it pings the owner (and optionally triggers one catch-up run). Catches
-   what the wrapper can't — the cron that never fired while the machine was on.
+   what the wrapper can't — the cron that never fired while the machine was on. **If the OPTIONAL sandbox
+   module is enabled (`SANDBOX_ENABLED=1`)** it also probes the sandbox engine (`docker info`): a run can
+   "complete" its trail while Docker/OrbStack is DOWN — every `scripts/sandbox-run.sh` then exits 127 and
+   sandbox dev work silently skips, a failure the completion contract can't see — so it fires a distinct
+   deduped alert (and, with `AUTO_RECOVER=1`, an `orb start` self-heal). Primary fix for the reboot case
+   is the engine's own "start on login" setting; the watchdog is the belt-and-braces for a mid-day engine
+   crash or a reboot with no login session.
 3. **The external dead-man's-switch** (`HEALTHCHECK_URL`, e.g. healthchecks.io) — the only thing that
    catches "the machine was off all day, nothing ran at all": if the wrapper's alive-ping doesn't
    arrive on schedule, the external service escalates to the owner. One-time human setup; pair with

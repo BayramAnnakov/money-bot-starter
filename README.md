@@ -31,8 +31,14 @@ evidence/        — screenshots backing ledger/decision claims (REDACT card num
 logs/            — raw run transcripts + errors (gitignored; retained locally — they're the audit ground truth)
 scripts/
   run-daily.sh      — canonical cron entrypoint: timeout, completion-contract check, auto-resume, heartbeat, crash ping, auto-commit
-  check-liveness.sh — independent watchdog (no claude dependency): alerts if no complete run when there should be one
+  check-liveness.sh — independent watchdog (no claude dependency): alerts if no complete run when there should be one; also probes the sandbox engine when the sandbox module is enabled
   poll-approvals.sh — owner-only DM approval channel: numeric-id auth, deterministic (no LLM); group + other DMs ignored
+  sandbox-run.sh    — OPTIONAL: the one allow-listed entry point for all untrusted dev work (build/test/install) inside an isolated container
+  sandbox-build.sh  — OPTIONAL: (re)build the sandbox image
+  sandbox-canary.sh — OPTIONAL: prove the sandbox has zero host secrets reachable (run after any Dockerfile change)
+sandbox/            — OPTIONAL (see "Sandboxed dev work" below)
+  Dockerfile        — the isolated build/test image (Python+uv, Node, Go, C/C++)
+  PERIMETER.md      — audit of what the agent CAN and CANNOT do without asking, once dev work runs in the box
 .env.example     — expected secrets + liveness config (copy to .env; .env is gitignored)
 prompts/
   kickoff.md     — first-run prompt (shadow mode: plan only, no spending)
@@ -41,9 +47,10 @@ prompts/
   skills/adopt-bot/         — the setup interview: "adopt this bot" → fills every blank
   skills/daily-report/      — posts the one-line P&L to Telegram
   skills/request-approval/  — pushes HITL approval requests to the owner (Telegram ping + state.md row)
-  skills/ask-advisor/       — a Fable-5 diverse-model second opinion on the day's top fork (advice, not command)
+  skills/ask-advisor/       — an independent red-team POV on the day's top fork (a stance, not necessarily a different model; advice, not command)
   skills/convene-council/   — a multi-perspective panel for weekly review + mandatory pre-pivot
   hooks/spend-gate.sh       — PreToolUse hook that blocks payment-pattern commands without approval
+  hooks/autonomy-guard.sh   — Stop hook: won't let a run quit before its trail/completion-contract is met
 ```
 
 ## Your first 24 hours (prep week runbook)
@@ -80,6 +87,19 @@ Observed live at the kickoff session: Claude refused account signup steps outrig
 1. **Prompts** (constitution, daily-loop gates) = advice. Necessary, not sufficient.
 2. **The spend-gate hook** (`.claude/hooks/spend-gate.sh`, wired via `.claude/settings.json`) = a speed bump with teeth: any Bash command matching payment patterns is blocked unless a one-time token exists. The agent writes the request to `state.md`; you grant exactly one execution with `touch approvals/APPROVE` (consumed + logged to `approvals/log.md` on use). While the charter still contains its placeholder banner, the hook blocks payment-pattern commands unconditionally — shadow mode with teeth. Limits: it sees Bash, not browser clicks — which is fine, because browser checkouts are a HUMAN step per constitution rule 6. **Claude Code only:** other runners (Codex etc., via AGENTS.md) don't read `.claude/settings.json` and silently lose this tier — they run on tier 1 + tier 3 alone, so keep the card limit tighter there.
 3. **The card limit** = physics. The only guardrail that holds when everything above fails. Never attach a card whose limit you wouldn't burn.
+
+## Optional: sandboxed dev work (needs Docker/OrbStack)
+
+Skip this whole section if your avenue never runs untrusted code (a digital-product store, a research-report bot). Turn it ON if your avenue means building/testing code you didn't write — **OSS bounties, competition kits, their transitive deps.** Running `uv sync` / `make` / `pytest` on such a repo executes that code next to your tokens; the sandbox moves the security boundary from *"which tool"* (a per-command approval treadmill) to *"which consequence"* (money/identity/secrets stay host-side and HITL-gated, while inside the box the agent gets generous permissions because a trashed container costs nothing). A Jul-2026 league bot found this was the single biggest enabler of autonomous dev work — it deleted a whole approval class.
+
+**Enable it:**
+1. Install Docker Desktop or OrbStack.
+2. Build the image: `scripts/sandbox-build.sh` (reads `sandbox/Dockerfile`).
+3. Set `SANDBOX_ENABLED=1` in `.env`.
+4. Set the engine to start on login so a reboot doesn't leave the bot with no sandbox — OrbStack: `orb config set app.start_at_login true`; Docker Desktop: Settings → "Start Docker Desktop when you sign in".
+5. **Tighten the allow-list** in `.claude/settings.json`: remove the host `Bash(python3/node/npm/pnpm/pytest)` allows so untrusted code *only* ever runs inside the box, via `scripts/sandbox-run.sh -C <subdir> "<cmd>"`. (The sandbox deny-list — no editing `sandbox-run.sh`/`Dockerfile`, no bare `docker` — already ships and is harmless if unused.)
+
+**What ships with it:** `sandbox-run.sh` (the single allow-listed entry point: cleared env, only `work/` mounted, host uid, resource caps), `sandbox-build.sh`, `sandbox-canary.sh` (proves zero host secrets are reachable — run it after any Dockerfile change), `sandbox/Dockerfile`, and `sandbox/PERIMETER.md` (the standing audit of what the box grants un-asked — read it, and re-run it for your own image). The watchdog (`check-liveness.sh`) gains an engine-reachability probe **only when `SANDBOX_ENABLED=1`**: a run can "complete" while the engine is down and sandbox work silently skips, so it pings you (deduped) if the engine is unreachable in-window.
 
 ## Rules that are not optional
 

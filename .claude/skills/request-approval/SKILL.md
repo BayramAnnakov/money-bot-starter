@@ -20,8 +20,19 @@ through the repo (token file or an updated row), not through messages.
    What: <one sentence>
    Gate: <spend >$X / account / ToS / irreversible / outreach / CAPTCHA-3DS>  Amount: $<x or —>
    Blocking: <what can't proceed until resolved>
+   Viability: <for a build/submit gate: where this realistically ranks + does it pay a stranger inside the funding window — the go/no-go, from PUBLIC evidence>
+   Ready artifact: <if you can produce it yourself ($0, in-sandbox): the packaged file's absolute path + sha256; else —>
    Approve spend: touch approvals/APPROVE · Human step: do it, then mark row #<n> done in state.md
    ```
+
+2b. **Briefing completeness is a gate requirement, not a courtesy — and package before you ask.** The
+   owner is spending their scarcest resource (attention, and sometimes their real name on a ToS) on the
+   *briefing you attach*, so a one-sided "it's great!" ask is a defect. The `Viability:` line is REQUIRED
+   for any gate that spends the owner's name/ToS/attention: state where this realistically lands from
+   public evidence, not just the upside. And if the gated action is really just publishing an artifact
+   you can produce yourself, PACKAGE it first (fill `Ready artifact:` with the path + checksum) so the
+   human step is a 30-second upload — never an API key or a CLI command handed to the owner (see
+   constitution rule 2, artifact-first hand-off).
 
 3. **Send it** to the chat id in `TELEGRAM_OWNER_CHAT_ID` (fall back to `TELEGRAM_CHAT_ID` if unset)
    via the available Telegram tool. If the tool OR both chat-id env vars are missing, print the
