@@ -30,7 +30,8 @@ approvals/       — one-time spend-approval tokens + consumption log (see Enfor
 evidence/        — screenshots backing ledger/decision claims (REDACT card numbers + PII first)
 logs/            — raw run transcripts + errors (gitignored; retained locally — they're the audit ground truth)
 scripts/
-  run-daily.sh      — canonical cron entrypoint: timeout, completion-contract check, auto-resume, heartbeat, crash ping, auto-commit
+  run-daily.sh      — canonical cron entrypoint: preflight, timeout, completion-contract check, auto-resume, heartbeat, crash ping, auto-commit
+  preflight.sh      — fail-fast env check before each run (auth token, tools, git, sandbox engine): HARD-fail skips the run instead of burning it; answers "is it actually running?"
   check-liveness.sh — independent watchdog (no claude dependency): alerts if no complete run when there should be one; also probes the sandbox engine when the sandbox module is enabled
   poll-approvals.sh — owner-only DM approval channel: numeric-id auth, deterministic (no LLM); group + other DMs ignored
   sandbox-run.sh    — OPTIONAL: the one allow-listed entry point for all untrusted dev work (build/test/install) inside an isolated container

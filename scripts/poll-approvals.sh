@@ -54,18 +54,26 @@ echo "$resp" | jq -c '.result[]?' | while IFS= read -r upd; do
     continue
   fi
 
-  norm=$(printf '%s' "$text" | tr 'A-Z' 'a-z' | tr -d '\r' | sed 's/^[[:space:]]*//')
-  case "$norm" in
-    approve*|/approve*|yes*#*|ok*#*|granted*)
-      touch approvals/APPROVE
-      { echo ""; echo "## $(date -u +%FT%TZ) — OWNER DM approval"; echo "> ${text}"; } >> approvals/log.md
-      echo "$(date -u +%FT%TZ) OWNER approval via DM -> approvals/APPROVE created" >> logs/approvals.log
-      curl -s -m 8 -X POST "${API}/sendMessage" -d chat_id="${TELEGRAM_OWNER_CHAT_ID}" \
-        --data-urlencode text="✅ Approval received — the next gated command will execute once." >/dev/null 2>&1 || true
-      ;;
-    *)
-      echo "$(date -u +%FT%TZ) owner DM (not an approval command, ignored): ${text}" >> logs/approvals.log
-      ;;
-  esac
+  # Grammar, in order of specificity:
+  #   1) BARE approval → mint the one-shot spend token (verb [+ #id] and NOTHING else). Strict on purpose.
+  #   2) SCOPED/EXPLAINED decision → a bounded owner NOTE, NO token: a deny/reject (reason optional) OR an
+  #      approve/grant followed by extra words (e.g. "approve 4: proposal only, no KYC"). Recorded verbatim;
+  #      the agent reads it next run and acts within the stated scope. The shell authenticates + records;
+  #      the LLM interprets the natural-language scope. Still not a general command channel — a note only
+  #      ever scopes/explains an approval the agent itself opened.
+  norm=$(printf '%s' "$text" | tr 'A-Z' 'a-z' | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  ack_owner() { curl -s -m 8 -X POST "${API}/sendMessage" -d chat_id="${TELEGRAM_OWNER_CHAT_ID}" --data-urlencode text="$1" >/dev/null 2>&1 || true; }
+  if [[ "$norm" =~ ^(/?approve(d)?|granted)([[:space:]]*#?[a-z0-9_-]+)?$ ]]; then
+    touch approvals/APPROVE
+    { echo ""; echo "## $(date -u +%FT%TZ) — OWNER DM approval"; echo "> ${text}"; } >> approvals/log.md
+    echo "$(date -u +%FT%TZ) OWNER approval via DM -> approvals/APPROVE created" >> logs/approvals.log
+    ack_owner "✅ Approval received — the next gated command will execute once."
+  elif [[ "$norm" =~ ^(deny|denied|denies|decline|declined|reject|rejected)([[:space:]#].*)?$ ]] || [[ "$norm" =~ ^(/?approve(d|s)?|approving|grant|granted|grants|granting)[[:space:]#].+$ ]]; then
+    { echo ""; echo "## $(date -u +%FT%TZ) — OWNER DECISION w/ note (DM, numeric-id authed) — SCOPED, NO spend token"; echo "> ${text}"; } >> approvals/log.md
+    echo "$(date -u +%FT%TZ) OWNER scoped decision via DM (no token): ${text}" >> logs/approvals.log
+    ack_owner "📝 Recorded your scoped decision — the agent reads it next run and acts within that scope (no blanket spend token). For a plain full-spend yes, reply just 'approve'."
+  else
+    echo "$(date -u +%FT%TZ) owner DM (not an approval command, ignored): ${text}" >> logs/approvals.log
+  fi
 done
 exit 0

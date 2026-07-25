@@ -35,10 +35,11 @@ complete_for() { # 0 iff the day's trail exists: a "## Day … <date>" journal H
   return 0
 }
 
-# --- pre-flight: the two things cron silently breaks on ---
-if ! command -v claude >/dev/null 2>&1; then
-  echo "$(date -u +%FT%TZ) run-daily: 'claude' not on PATH ($PATH)" >> logs/daily.err
-  tg "$(owner_chat)" "🤖⛔ run-daily: 'claude' not found on PATH — the loop cannot run. Fix PATH in scripts/run-daily.sh."
+# --- pre-flight: fail-fast on the things cron/reboots/outages silently break (auth, tools, git, engine).
+#     scripts/preflight.sh HARD-fails (exit 1) only on universal blockers and alerts the owner itself;
+#     it soft-warns (exit 0, alert, proceed) on a degraded-but-usable env (e.g. sandbox engine down). ---
+if ! bash "$ROOT/scripts/preflight.sh"; then
+  echo "$(date -u +%FT%TZ) run-daily: preflight HARD-FAILED — skipping ${RUN_ID} so a broken env doesn't burn a session" >> logs/daily.err
   hc_ping "/fail"; exit 1
 fi
 

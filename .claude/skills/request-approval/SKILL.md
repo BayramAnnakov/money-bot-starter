@@ -23,6 +23,7 @@ through the repo (token file or an updated row), not through messages.
    Viability: <for a build/submit gate: where this realistically ranks + does it pay a stranger inside the funding window — the go/no-go, from PUBLIC evidence>
    Ready artifact: <if you can produce it yourself ($0, in-sandbox): the packaged file's absolute path + sha256; else —>
    Approve spend: touch approvals/APPROVE · Human step: do it, then mark row #<n> done in state.md
+   Partial / conditional? Reply in DM "approve #<n>: <what you're granting>" or "deny #<n>: <why>" — a plain ✅ tap = FULL grant.
    ```
 
 2b. **Briefing completeness is a gate requirement, not a courtesy — and package before you ask.** The
@@ -51,6 +52,11 @@ through the repo (token file or an updated row), not through messages.
    `✅ APPROVAL #<n> resolved: <what> — <spend approved / step done by owner>` to the group and
    append the row to `interventions.md` (owner fills minutes). Every ⏸️ eventually gets its ✅ —
    an unmatched ⏸️ older than 48h is a blocker worth flagging in the daily line.
+4c. **Honor a SCOPED owner note.** An `OWNER DECISION w/ note` block in `approvals/log.md` is AUTHORITATIVE
+   and may be PARTIAL: do ONLY the granted part, and treat any part it withholds as still-gated (it is NOT
+   granted even if a bare ✅/`approvals/APPROVE` token also exists — the note's scope wins for that approval).
+   For a **deny with a reason**, record the reason in `decisions.md` as the resolution (it's a scored input
+   for the retro), then kill/shelve the blocked bet. Reflect the exact scope in the state.md row before acting.
 5. **Escalation, capped:** a row still `waiting` after 24h earns ONE re-ping per day, prefixed
    `⏳ STILL WAITING`. Never more — the steering budget is ~1 intervention/day and nagging spends
    the owner's attention like the card spends money.
