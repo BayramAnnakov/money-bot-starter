@@ -34,7 +34,12 @@ if [ "${SANDBOX_ENABLED:-0}" = "1" ]; then
   elif ! docker info >/dev/null 2>&1; then    add_soft "SANDBOX_ENABLED=1 but Docker/OrbStack engine down — sandbox-run will exit 127"; fi
 fi
 if command -v gh >/dev/null 2>&1 && [ -n "${GH_TOKEN:-}" ]; then
-  gh auth status >/dev/null 2>&1 || add_soft "gh auth failing (GH_TOKEN expired/revoked?) — bounty scouting via gh will fail"
+  # Probe an authed endpoint, but RETRY — `gh` hits the network to validate, so a single transient blip
+  # must not cry wolf (observed 2026-07-25: a false "gh auth failing" alert while the token was valid).
+  # `rate_limit` is a real auth check (401 on a bad token) that doesn't consume quota. Warn only if ALL fail.
+  gh_ok=0
+  for _ in 1 2 3; do gh api rate_limit >/dev/null 2>&1 && { gh_ok=1; break; }; sleep 2; done
+  [ "$gh_ok" = 1 ] || add_soft "gh auth failing after 3 tries (GH_TOKEN expired/revoked?) — bounty scouting via gh will fail"
 fi
 
 alert(){ # alert <text> — owner DM (no secrets); best-effort
