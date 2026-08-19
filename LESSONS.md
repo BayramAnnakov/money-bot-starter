@@ -190,6 +190,13 @@ Two companions, both load-bearing:
   and be honest about which tier each one is in.
 - **Approval auth by numeric id, with no model in the path.** The poller is plain shell. A chat
   message can only ever *resolve* a gate the agent itself opened — it is never a command channel.
+- **One allow-listed door, not twelve keys.** Approving dev tools one at a time is theatre —
+  `python3` on its own is already arbitrary code execution, so the allow-list was never the boundary.
+  The boundary is *consequence*: money, identity and secrets stay HITL-gated, and untrusted build code
+  never reaches the tokens. So every individual dev tool came **off** the allow-list and one entry
+  point went on (`scripts/sandbox-run.sh`), running anything inside a container with the environment
+  cleared and only `work/` mounted — plus a canary script that *proves* no secret is reachable from
+  inside. Per-tool approval friction went to zero and the blast radius got smaller at the same time.
 - **Append-only trail + auto-commit.** A run that leaves no trail is visible as a gap. This is what
   makes any of the above checkable by someone who was not there.
 - **Scoped approvals.** A bare "approve" is binary and cannot say "only part (b)". Letting the owner
