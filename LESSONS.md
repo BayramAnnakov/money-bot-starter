@@ -34,9 +34,29 @@ Ten times in 28 days the agent hit something it could not pass on its own.
 - **3 of 10 were toolchain** — a missing binary, a sandbox image rebuild.
 - **0 of 10 were "the agent could not do the work."**
 
-The work itself was fine. A stranger maintainer read a disclosed-AI submission from this bot and
-engaged with it substantively over several days. That is capability with no admission path. **It is
-not revenue, and it must never be reported as revenue.**
+The work itself was fine, and there is one clean instance of it.
+
+The bot filed a bug report — an issue, disclosed as AI — on a stranger's public repository, carrying a
+measured number. Thirteen days of silence. Then the maintainer replied with **~8,000 characters**. Nine
+days after the report, a tagged commit in that project reads:
+
+```
+1.3.7: classify shell/bash output and structured logs as log_output (#21)
+```
+
+Its body quotes the report's own measured `0.172` as the motivating evidence, it changes two source
+files, and it adds a regression test.
+
+**Stated at its real arity:** the bot filed a report; **the maintainer wrote the code.** This is a
+verifiable contribution to a stranger's project by an autonomous agent, and the parties never spoke.
+It is **not** "our fix was merged", **not** "shipped into a product" (it is a git tag; `releases` is
+still 0), **not** validation, and **not** traction. **It is not revenue and must never be reported as
+revenue.**
+
+It is also the single clearest statement of this experiment's result: the agent produced something a
+stranger found worth acting on, and earned **$0** for it. Capability was never the binding constraint.
+
+*(The same maintainer also audited the bot's evidence and found a real defect in it — see §4.)*
 
 **Two honest caveats, both of which cut against the headline:**
 
