@@ -12,5 +12,15 @@ logs/*
 approvals/APPROVE
 .last-alive
 .watchdog-alerted
+.docker-alerted
 .run.lock/
 .tg-offset
+
+# runtime session state written by the wrapper + autonomy-guard hook
+.session-mode
+.session-started
+
+# external code the agent clones/forks for bounties, competitions, scratch builds.
+# NEVER tracked here: the wrapper auto-commits and pushes everything else on every
+# run, so a clone in the tracked tree would leak that repo's own secrets. See CLAUDE.md rule 9.
+work/

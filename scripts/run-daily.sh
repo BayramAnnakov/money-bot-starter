@@ -37,7 +37,8 @@ complete_for() { # 0 iff the day's trail exists: a "## Day … <date>" journal H
 
 # --- pre-flight: fail-fast on the things cron/reboots/outages silently break (auth, tools, git, engine).
 #     scripts/preflight.sh HARD-fails (exit 1) only on universal blockers and alerts the owner itself;
-#     it soft-warns (exit 0, alert, proceed) on a degraded-but-usable env (e.g. sandbox engine down). ---
+#     it soft-warns (exit 0, alert, proceed) on a degraded-but-usable env (e.g. sandbox engine down).
+#     This is the general form of the old claude+auth check, plus the failures that bit us this week. ---
 if ! bash "$ROOT/scripts/preflight.sh"; then
   echo "$(date -u +%FT%TZ) run-daily: preflight HARD-FAILED — skipping ${RUN_ID} so a broken env doesn't burn a session" >> logs/daily.err
   hc_ping "/fail"; exit 1
@@ -56,17 +57,24 @@ if ! mkdir "$LOCK" 2>/dev/null; then
   fi
 fi
 echo "$$" > "$LOCK/pid"
-trap 'rm -rf "$LOCK" 2>/dev/null' EXIT INT TERM HUP
+trap 'rm -rf "$LOCK" 2>/dev/null; rm -f "$ROOT/.session-started" 2>/dev/null' EXIT INT TERM HUP
 
-# --- idempotence: if today's run already completed, do NOT run the money loop again ---
-if complete_for "$TODAY"; then
-  echo "$(date -u +%FT%TZ) run-daily: already complete for $TODAY; skipping" >> logs/daily.err
-  exit 0
-fi
+# --- mode: the FIRST run of the day does the full daily loop (reconcile + report + trail, once/day);
+#     once today's trail exists, later scheduled runs become WORK SESSIONS that advance open
+#     bounties/entries instead of skipping. That is what turns "3x/day" into real throughput
+#     rather than two idempotence no-ops. A broken daily loop never flips to work (complete_for
+#     stays false), so failures still alert normally. ---
+if complete_for "$TODAY"; then MODE=work; else MODE=daily; fi
+echo "$MODE" > "$ROOT/.session-mode"
+echo "$(date -u +%FT%TZ) run-daily: starting ${RUN_ID} mode=${MODE}" >> logs/daily.err
 
 run_attempt() { # run_attempt <prompt> <transcript> ; portable timeout, returns claude's exit (124=timeout)
   local prompt="$1" transcript="$2" cpid waited=0
-  claude -p "$prompt" --permission-mode acceptEdits --output-format stream-json --verbose >"$transcript" 2>>logs/daily.err &
+  # Scrub Telegram/healthcheck secrets from the agent's environment (it must NOT be able to read the
+  # bot token — the outbox is its only send path). KEEP GH_TOKEN: it scope-limits gh to this repo's
+  # PAT instead of falling back to the full-power keyring OAuth. Pin the model (charter: Opus).
+  env -u TELEGRAM_BOT_TOKEN -u TELEGRAM_CHAT_ID -u TELEGRAM_OWNER_CHAT_ID -u HEALTHCHECK_URL \
+    claude -p "$prompt" --model "${CLAUDE_MODEL:-opus}" --permission-mode acceptEdits --output-format stream-json --verbose >"$transcript" 2>>logs/daily.err &
   cpid=$!
   while kill -0 "$cpid" 2>/dev/null; do
     sleep 5; waited=$((waited+5))
@@ -77,23 +85,32 @@ run_attempt() { # run_attempt <prompt> <transcript> ; portable timeout, returns 
   wait "$cpid"
 }
 
-BASE_PROMPT="$(cat prompts/daily-loop.md)"
+if [ "$MODE" = "work" ]; then BASE_PROMPT="$(cat prompts/work-session.md)"; else BASE_PROMPT="$(cat prompts/daily-loop.md)"; fi
 RESUME_HINT="You may have stopped mid-run last attempt (turn/context limit or an API error). Re-read state.md and FINISH the incomplete work; you MUST complete the Trail step (journal entry + metrics row + rewritten state.md) before ending."
+run_complete() { # mode-aware "did this run do its job?" — daily: today's trail; work: state.md advanced this attempt
+  if [ "$MODE" = "work" ]; then
+    [ -n "$(find state.md -newer "$ROOT/.session-started" 2>/dev/null)" ]
+  else
+    complete_for "$TODAY"
+  fi
+}
 
 attempt=0; EXIT=0; TRANSCRIPT=""
 while :; do
   TRANSCRIPT="logs/transcripts/${RUN_ID}-a${attempt}.jsonl"
+  date -u +%FT%TZ > "$ROOT/.session-started"      # Stop-hook (autonomy-guard) marker for THIS attempt
+  : > logs/.stop-nudges 2>/dev/null || true        # reset the autonomy-guard nudge counter per attempt
   if [ "$attempt" -eq 0 ]; then P="$BASE_PROMPT"; else P="${RESUME_HINT}"$'\n\n'"${BASE_PROMPT}"; fi
   run_attempt "$P" "$TRANSCRIPT"; EXIT=$?
-  complete_for "$TODAY" && break
+  run_complete && break
   [ "$attempt" -ge "$MAX_RETRIES" ] && break
   attempt=$((attempt+1))
-  echo "$(date -u +%FT%TZ) run-daily: incomplete trail (exit=$EXIT); auto-resume attempt $attempt" >> logs/daily.err
+  echo "$(date -u +%FT%TZ) run-daily: run incomplete (mode=$MODE exit=$EXIT); auto-resume attempt $attempt" >> logs/daily.err
   sleep 30
 done
 
 # --- telemetry from the last transcript's result envelope (best-effort) ---
-COST=""; TURNS=""; DUR=""; SUBTYPE=""; IS_ERR=""
+COST=""; TURNS=""; DUR=""; SUBTYPE=""; IS_ERR=""; RESULT_TXT=""; ERRSTR=""; TERM=""
 if command -v jq >/dev/null 2>&1 && [ -s "$TRANSCRIPT" ]; then
   RL="$(jq -c 'select(.type=="result")' "$TRANSCRIPT" 2>/dev/null | tail -1)"
   if [ -n "$RL" ]; then
@@ -102,11 +119,14 @@ if command -v jq >/dev/null 2>&1 && [ -s "$TRANSCRIPT" ]; then
     DUR="$(printf '%s' "$RL" | jq -r '.duration_ms // empty' 2>/dev/null)"
     SUBTYPE="$(printf '%s' "$RL" | jq -r '.subtype // empty' 2>/dev/null)"
     IS_ERR="$(printf '%s' "$RL" | jq -r '.is_error // empty' 2>/dev/null)"
+    RESULT_TXT="$(printf '%s' "$RL" | jq -r '.result // empty' 2>/dev/null)"
+    ERRSTR="$(printf '%s' "$RL" | jq -r '.error // empty' 2>/dev/null)"
+    TERM="$(printf '%s' "$RL" | jq -r '.terminal_reason // empty' 2>/dev/null)"
   fi
 fi
 
-# The TRAIL is the source of truth: journal+metrics present → DONE regardless of subtype.
-if complete_for "$TODAY"; then COMPLETE=1; else COMPLETE=0; fi
+# Mode-aware "did this run do its job?": daily → today's trail (source of truth); work → state.md advanced.
+if run_complete; then COMPLETE=1; else COMPLETE=0; fi
 if   [ "$EXIT" -eq 124 ];                          then STATUS=timeout
 elif [ "$COMPLETE" -eq 1 ];                        then STATUS=ok
 elif [ "$EXIT" -ne 0 ] || [ "$IS_ERR" = "true" ];  then STATUS=error
@@ -118,16 +138,31 @@ echo "${RUN_ID},${TODAY},${STATUS},${EXIT},${DUR},${TURNS},${COST},$((attempt+1)
 if [ "$COMPLETE" -eq 1 ]; then
   date -u +%FT%TZ > .last-alive
   hc_ping ""
-else
+elif [ "$MODE" = "daily" ]; then
   hc_ping "/fail"
-  tg "$(owner_chat)" "🤖⚠️ Daily run ${RUN_ID} did NOT complete (status=${STATUS}, subtype=${SUBTYPE:-n/a}, attempts=$((attempt+1))). No trail for ${TODAY}. state.md is preserved — the next run resumes. See logs/daily.err."
+  # Auth failures get a SPECIFIC, actionable ping (re-authenticate) — not the generic "did not complete".
+  if printf '%s %s %s' "$RESULT_TXT" "$ERRSTR" "$TERM" | grep -qiE 'not logged in|/login|authentication_failed|invalid( api)? key|oauth|unauthorized'; then
+    tg "$(owner_chat)" "🔐 FirstDollar can't authenticate — \"${RESULT_TXT:-auth error}\". The headless token is missing or expired. Fix: run 'claude setup-token' and update CLAUDE_CODE_OAUTH_TOKEN in .env — it resumes automatically on the next run. (run ${RUN_ID})"
+  else
+    tg "$(owner_chat)" "🤖⚠️ Daily run ${RUN_ID} did NOT complete (status=${STATUS}, subtype=${SUBTYPE:-n/a}, attempts=$((attempt+1))). No trail for ${TODAY}. state.md is preserved — the next run resumes. See logs/daily.err."
+  fi
+else
+  # A work session that advanced nothing is NOT an emergency: today's trail already exists, so the bot
+  # is alive. Keep liveness fresh + ping success, log quietly — no owner alarm for a bonus session.
+  date -u +%FT%TZ > .last-alive
+  hc_ping ""
+  echo "$(date -u +%FT%TZ) run-daily: work session ${RUN_ID} advanced nothing; no alert (today's trail already present)" >> logs/daily.err
 fi
+
+# --- deliver the agent's Telegram outbox (daily line, approval pings): the agent can't send
+#     directly (no token access), so the deterministic sender flushes what it queued ---
+bash "$ROOT/scripts/send-outbox.sh" >/dev/null 2>&1 || true
 
 # --- commit ritual: ONLY once the charter is frozen (shadow/template stays pristine — never
 #     auto-push a placeholder template, and never publish an unfrozen working copy). ---
 if ! grep -q "PLACEHOLDER" charter.md 2>/dev/null; then
   git add -A >/dev/null 2>&1
-  git commit -m "run ${RUN_ID}: ${STATUS} (complete=${COMPLETE})" >/dev/null 2>&1 || true
+  git commit -m "run ${RUN_ID}: ${STATUS} ${MODE} (complete=${COMPLETE})" >/dev/null 2>&1 || true
   if [ "$PUSH_ON_RUN" = "1" ]; then
     git push origin HEAD >>logs/daily.err 2>&1 || echo "$(date -u +%FT%TZ) run-daily: git push failed (see above)" >> logs/daily.err
   fi

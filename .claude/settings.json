@@ -3,17 +3,18 @@
     "allow": [
       "Read", "Grep", "Glob", "Write", "Edit", "TodoWrite", "Task", "Skill", "WebFetch", "WebSearch",
       "Bash(git status:*)", "Bash(git add:*)", "Bash(git commit:*)", "Bash(git push:*)", "Bash(git pull:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git checkout:*)", "Bash(git clone:*)", "Bash(git branch:*)",
-      "Bash(gh:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(grep:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(mv:*)", "Bash(python3:*)", "Bash(node:*)", "Bash(npm:*)", "Bash(pnpm:*)", "Bash(pytest:*)",
-      "Bash(scripts/sandbox-run.sh:*)", "Bash(./scripts/sandbox-run.sh:*)"
+      "Bash(gh:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(grep:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(mv:*)", "Bash(shasum:*)",
+      "Bash(scripts/sandbox-run.sh:*)", "Bash(./scripts/sandbox-run.sh:*)",
+      "Bash(scripts/outbox-add.sh:*)", "Bash(./scripts/outbox-add.sh:*)"
     ],
     "deny": [
-      "Read(.env)", "Write(.env)", "Edit(.env)",
-      "Write(approvals/APPROVE)", "Edit(approvals/APPROVE)",
-      "Write(.mcp.json)", "Edit(.mcp.json)",
-      "Write(.claude/settings.json)", "Edit(.claude/settings.json)", "Write(.claude/settings.local.json)", "Edit(.claude/settings.local.json)",
-      "Bash(sudo:*)",
+      "Read(.env)",
+      "Edit(.env)",
+      "Edit(approvals/APPROVE)",
+      "Edit(.mcp.json)",
+      "Edit(.claude/settings.json)", "Edit(.claude/settings.local.json)",
       "Edit(scripts/sandbox-run.sh)", "Edit(scripts/sandbox-build.sh)", "Edit(sandbox/Dockerfile)",
-      "Bash(docker:*)"
+      "Bash(sudo:*)", "Bash(docker:*)"
     ]
   },
   "enableAllProjectMcpServers": false,

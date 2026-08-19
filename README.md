@@ -1,6 +1,19 @@
 # Money Bot Starter
 
-Scaffold for the AI Natives autonomous money-making experiment (kicked off 2026-07-03, launch 2026-07-10, 4 weeks).
+Scaffold for an autonomous money-making agent: constitution, ledger-first guardrails, HITL gates,
+and an append-only audit trail. Built for the AI Natives league (kicked off 2026-07-03).
+
+> ### It has been run. It earned $0.
+>
+> One bot built from this scaffold ran **28 days on cron, 86 runs, on a $100 hard-capped card** and
+> earned **nothing** — stranger $0, insider $0. The card was never charged.
+>
+> **[LESSONS.md](LESSONS.md) is the write-up of that null result**, and it is the most useful file
+> here: where the run actually got stuck (7 of its 10 blocking gates were *identity*, none were
+> capability), how the completion contract stayed green through four days of a dead sandbox, and why
+> every guardrail in this repo is still untested by anything other than its author.
+>
+> Read it before you plan your run. It will not tell you this scaffold makes money.
 
 One repo = one agent = one P&L. The repo IS the observability layer: constitution, ledger, and decision log are all markdown, all auditable by the group.
 
@@ -10,6 +23,7 @@ One repo = one agent = one P&L. The repo IS the observability layer: constitutio
 
 ```
 CLAUDE.md        — the agent's constitution (mission, budget, guardrails, HITL gates)
+LESSONS.md       — what a completed 28-day run taught: the null result, and the harness bugs it exposed
 AGENTS.md        — pointer for Codex/other agents → read CLAUDE.md
 charter.md       — kickoff decisions + your bot's charter (placeholder until YOU freeze it)
 RAILS.md         — payment-rails picker: what actually worked at the kickoff, by geography
@@ -33,7 +47,10 @@ scripts/
   run-daily.sh      — canonical cron entrypoint: preflight, timeout, completion-contract check, auto-resume, heartbeat, crash ping, auto-commit
   preflight.sh      — fail-fast env check before each run (auth token, tools, git, sandbox engine): HARD-fail skips the run instead of burning it; answers "is it actually running?"
   check-liveness.sh — independent watchdog (no claude dependency): alerts if no complete run when there should be one; also probes the sandbox engine when the sandbox module is enabled
-  poll-approvals.sh — owner-only DM approval channel: numeric-id auth, deterministic (no LLM); group + other DMs ignored
+  poll-approvals.sh — owner-only approval channel: numeric-id auth, deterministic (no LLM); group + other DMs ignored; also flushes the outbox
+  send-outbox.sh    — delivery-checked flush of the agent's queued Telegram messages
+  outbox-add.sh     — the agent's only way to queue a message (it never calls the Telegram API directly)
+  watch.sh          — local tail of run state: what the loop is doing right now
   sandbox-run.sh    — OPTIONAL: the one allow-listed entry point for all untrusted dev work (build/test/install) inside an isolated container
   sandbox-build.sh  — OPTIONAL: (re)build the sandbox image
   sandbox-canary.sh — OPTIONAL: prove the sandbox has zero host secrets reachable (run after any Dockerfile change)
@@ -43,7 +60,8 @@ sandbox/            — OPTIONAL (see "Sandboxed dev work" below)
 .env.example     — expected secrets + liveness config (copy to .env; .env is gitignored)
 prompts/
   kickoff.md     — first-run prompt (shadow mode: plan only, no spending)
-  daily-loop.md  — the recurring "hustle" prompt
+  daily-loop.md  — the recurring "hustle" prompt (the daily run: trail + report)
+  work-session.md — the mid-day working prompt (execution only; writes no journal/metrics row)
 .claude/
   skills/adopt-bot/         — the setup interview: "adopt this bot" → fills every blank
   skills/daily-report/      — posts the one-line P&L to Telegram
