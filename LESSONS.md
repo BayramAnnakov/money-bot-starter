@@ -90,19 +90,29 @@ contract_met() {
 Both bounds matter. Unbounded, you get an agent that cannot quit. Fail-closed, a bug in your own
 hook bricks the loop.
 
-**Then this happened.** The sandbox engine stopped. For the next four dates every `sandbox-run.sh`
-returned **exit 127** and every piece of sandboxed work silently skipped. Twelve consecutive runs
+**Then this happened.** The sandbox engine stopped on its own on 2026-08-06 — not a reboot, the host
+had been up 16 days. For the next three dates every `sandbox-run.sh` died at line 30 (`docker daemon
+not running`, **exit 127**) and every piece of sandboxed work was skipped. Nine consecutive runs
 logged:
 
 ```
 20260806-090000  ok  exit=0  complete=1
 20260806-130000  ok  exit=0  complete=1
 ...
-20260809-170001  ok  exit=0  complete=1
+20260808-170000  ok  exit=0  complete=1
 ```
 
-All green. The contract could not see it, because **the contract checks for a trail — and writing
-the trail is precisely what a broken agent still manages to do.**
+All green — and three more the same way on 08-09, until a human restarted the engine that afternoon.
+The contract could not see any of it, because **the contract checks for a trail — and writing the
+trail is precisely what a broken agent still manages to do.**
+
+**What the contract missed, the agent itself reported** — and that half is the part worth copying. It
+did not fake its way through the outage: `state.md` carried `SANDBOX STILL DOWN … six $0 controls
+OFFLINE`, five forecasts shipped **UNSCORED** rather than guessed, it tried to restart the engine
+itself, was correctly denied by its own permission layer (an agent may not widen its own host
+surface), and escalated to the owner as approval #9 — cleared the same day with one `orb start`. So
+the harness was blind for three days while the agent was not. Build the agent so it can say *"I
+couldn't"*, and give that sentence somewhere to go other than the completion flag.
 
 > **The rule: your liveness check must share zero dependencies with the thing it is checking.**
 

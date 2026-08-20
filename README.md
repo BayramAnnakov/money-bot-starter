@@ -10,7 +10,7 @@ and an append-only audit trail. Built for the AI Natives league (kicked off 2026
 >
 > **[LESSONS.md](LESSONS.md) is the write-up of that null result**, and it is the most useful file
 > here: where the run actually got stuck (7 of its 10 blocking gates were *identity*, none were
-> capability), how the completion contract stayed green through four days of a dead sandbox, and why
+> capability), how the completion contract stayed green through a three-day sandbox outage, and why
 > every guardrail in this repo is still untested by anything other than its author.
 >
 > Read it before you plan your run. It will not tell you this scaffold makes money.
