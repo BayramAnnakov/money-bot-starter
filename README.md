@@ -15,6 +15,74 @@ and an append-only audit trail. Built for the AI Natives league (kicked off 2026
 >
 > Read it before you plan your run. It will not tell you this scaffold makes money.
 
+## Architecture
+
+Three **independent** cron entries, three enforcement points, one door into the sandbox, and a trail
+that commits itself. The agent is the hexagon; everything around it is the harness.
+
+```mermaid
+flowchart TB
+    C1(["cron 3x daily"]) --> PF["preflight.sh<br/>fail fast on a broken env"]
+    PF --> ENV["<b>secrets stripped</b><br/>env -u TELEGRAM_* HEALTHCHECK_*"]
+    ENV --> CL["claude -p<br/>timeout + auto-resume"]
+    CL --> ACT{{"the agent<br/>CLAUDE.md + prompts/"}}
+
+    ACT -->|every Bash command| SG["<b>spend-gate.sh</b><br/>PreToolUse"]
+    SG -->|payment pattern,<br/>no token| BLK[["BLOCKED - exit 2"]]
+    SG -->|clean| SR["<b>sandbox-run.sh</b><br/>the only allow-listed executor"]
+    SR --> CT["container<br/>env cleared, only work/ mounted"]
+
+    ACT -->|tries to end the turn| AG["<b>autonomy-guard.sh</b><br/>Stop"]
+    AG -->|no journal entry<br/>or metrics row| NUD[["nudge, bounded at 3"]]
+    AG -->|contract met| DONE(["run ends"])
+
+    ACT ==> TR["<b>append-only trail</b><br/>journal - ledger - decisions<br/>forecasts - metrics - runs"]
+    DONE --> GIT["git add -A + commit + push<br/>every run"]
+    TR --> GIT
+
+    ACT -->|"outbox-add.sh<br/>no token reachable"| SO["send-outbox.sh<br/><i>holds the token</i>"]
+    C2(["cron 1 min"]) --> SO
+    SO --> TG(["Telegram"])
+    TG -->|owner DM or button| C2
+    C2 -->|"numeric-id auth<br/><b>no model in the path</b>"| TOK[/"approvals/APPROVE"/]
+    TOK -.one-shot, consumed by.-> SG
+
+    C3(["cron 30 min"]) --> WD["check-liveness.sh<br/>probes the engine directly<br/><b>no claude dependency</b>"]
+    WD --> TG
+
+    CARD[["$100 card cap<br/>the only tier that is physics"]]
+    CT -.-> CARD
+
+    classDef phys fill:#7f1d1d,stroke:#ef4444,color:#fff
+    classDef gate fill:#78350f,stroke:#f59e0b,color:#fff
+    classDef good fill:#14532d,stroke:#22c55e,color:#fff
+    class CARD,BLK phys
+    class SG,AG,TOK gate
+    class TR,GIT good
+```
+
+**Five things the picture is trying to say:**
+
+1. **The wrapper strips the secrets before the agent starts.** `run-daily.sh` unsets the Telegram and
+   healthcheck variables, so the agent physically cannot reach the bot token. That is *why*
+   `outbox-add.sh` exists — the agent queues a message, and a separate process that still has the token
+   delivers it.
+2. **The watchdog shares nothing with the thing it watches.** `check-liveness.sh` runs from its own cron
+   entry, has no `claude` dependency, and probes the container engine directly — so it survives the
+   exact failures that take the agent down. A monitor that runs inside the system it monitors reports
+   "healthy" while dead.
+3. **Approvals never pass through a model.** `poll-approvals.sh` is plain shell. It authenticates the
+   owner by **numeric id** — usernames are spoofable — and the only thing it can produce is a one-shot
+   token file that the spend gate consumes. A chat message can resolve a gate the agent itself opened;
+   it can never issue a command.
+4. **One door, not twelve keys.** Every individual dev tool is *off* the allow-list; `sandbox-run.sh` is
+   on it. Allow-listing `python3` is not a security boundary — `python3` alone is arbitrary code
+   execution. The boundary is consequence: secrets unreachable, only `work/` mounted.
+5. **Only the card cap is physics.** The constitution is advice, the hook is a regex, the deny-list is
+   configuration. Exactly one control cannot be argued with, and it lives at your bank.
+
+Read [LESSONS.md](LESSONS.md) for where each of these failed in practice.
+
 One repo = one agent = one P&L. The repo IS the observability layer: constitution, ledger, and decision log are all markdown, all auditable by the group.
 
 **League model (decided at kickoff):** every participant runs their OWN bot from this template — own idea, own $100, own card, own Telegram chat, own P&L. Use GitHub's *Use this template* (or fork), then run the adopt-bot skill below. The upstream repo doubles as the league roster: PR your row into `REGISTRY.md`. Bots never share a ledger or a report chat.
