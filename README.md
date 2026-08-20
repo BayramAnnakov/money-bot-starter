@@ -14,6 +14,9 @@ and an append-only audit trail. Built for the AI Natives league (kicked off 2026
 > every guardrail in this repo is still untested by anything other than its author.
 >
 > Read it before you plan your run. It will not tell you this scaffold makes money.
+>
+> The 5-minute talk about that run — AI Tinkerers Seattle, 19 Aug 2026:
+> **[the deck, as presented](talk/firstdollar-ai-tinkerers-2026-08-19.pdf)** (13 pages, one per build step).
 
 ## Architecture
 
